@@ -1,0 +1,54 @@
+# Sonara and PostgreSQL, each in its own container.
+#
+#   cp .env.example .env        # then set MUSIC_DIR and POSTGRES_PASSWORD
+#   docker compose -p sonara up --build -d
+#
+# Run from this folder, or pass -f install/compose/docker-compose.yaml from the repo root.
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: sonara
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in install/compose/.env}
+      POSTGRES_DB: ${SONARA_DATABASE:-sonara}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sonara -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    # No published ports: only the sonara container can reach the database.
+    # To use it from your IDE, add docker-compose.dev.yaml (see that file).
+
+  sonara:
+    build:
+      context: ../..
+    image: sonara:dev
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${SONARA_PORT:-4040}:4040"
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: "America/New_York"
+      Sonara__Database__ConnectionString: "Host=db;Database=${SONARA_DATABASE:-sonara};Username=sonara;Password=${POSTGRES_PASSWORD}"
+      # Only used on the very first start. If empty, a random password is printed in the log.
+      Sonara__AdminPassword: ${SONARA_ADMIN_PASSWORD:-}
+      # Optional: enables "Find podcasts" (free keys from https://api.podcastindex.org).
+      Sonara__Podcasts__PodcastIndex__ApiKey: ${PODCASTINDEX_API_KEY:-}
+      Sonara__Podcasts__PodcastIndex__ApiSecret: ${PODCASTINDEX_API_SECRET:-}
+    volumes:
+      - sonara-data:/var/sonara   # holds the credential-encryption key (secret.key): back it up
+      - ${MUSIC_DIR:?Set MUSIC_DIR in install/compose/.env}:/var/music:ro
+      - ${PODCAST_DIR:-./podcasts}:/var/podcast
+      - ${PLAYLIST_DIR:-./playlists}:/var/playlists
+      - ${UPLOAD_DIR:-./uploads}:/var/uploads
+    restart: unless-stopped
+
+volumes:
+  pg-data:
+  sonara-data:

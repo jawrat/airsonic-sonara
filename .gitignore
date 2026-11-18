@@ -1,0 +1,38 @@
+﻿bin/
+obj/
+.vs/
+*.user
+data/
+node_modules/
+web/dist/
+web/.angular/
+install/compose/.env
+
+# Local environment files; retain sanitized templates
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Credentials and private certificates
+secret.key
+secret.key.*
+*.pfx
+*.p12
+*.pem
+*.key
+
+# Local runtime content
+/install/compose/podcasts/
+/install/compose/playlists/
+/install/compose/uploads/
+/backups/
+upload-staging/
+*.dump
+*.sql
+*.zip
+
+# Test and diagnostic output
+TestResults/
+coverage/
+*.log

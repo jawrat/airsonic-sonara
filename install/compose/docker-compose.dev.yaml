@@ -1,0 +1,11 @@
+# Optional override: publish PostgreSQL on localhost so you can run the API from your IDE or
+# `dotnet run` against the same database container.
+#
+#   docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d db
+#
+# Then run the API with:
+#   Sonara__Database__ConnectionString="Host=localhost;Database=sonara;Username=sonara;Password=<POSTGRES_PASSWORD>"
+services:
+  db:
+    ports:
+      - "127.0.0.1:5432:5432"   # bound to localhost only

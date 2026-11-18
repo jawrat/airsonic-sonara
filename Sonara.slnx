@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Sonara.Core/Sonara.Core.csproj" />
+    <Project Path="src/Sonara.Data/Sonara.Data.csproj" />
+    <Project Path="src/Sonara.Api/Sonara.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Sonara.Tests/Sonara.Tests.csproj" />
+  </Folder>
+</Solution>
