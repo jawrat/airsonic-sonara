@@ -21,6 +21,7 @@ const TITLES: Record<string, string> = {
   album: 'Album',
   artist: 'Artist',
   playlists: 'Playlists',
+  shares: 'Shared links',
   queue: 'Play queue',
   playlist: 'Playlist',
   starred: 'Starred',
@@ -114,6 +115,7 @@ export class App {
     { path: '/queue', label: 'Play queue', color: 'c3' },
     { path: '/starred', label: 'Starred', color: 'c2' },
     { path: '/playlists', label: 'Playlists', color: 'c2' },
+    { path: '/shares', label: 'Shared links', color: 'c4' },
     { path: '/podcasts', label: 'Podcasts', color: 'c2' },
     { path: '/bookmarks', label: 'Bookmarks', color: 'c2' },
   ];

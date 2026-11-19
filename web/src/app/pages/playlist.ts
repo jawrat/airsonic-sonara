@@ -1,3 +1,4 @@
+import { Share } from '../ui/share';
 import { Component, inject, input, resource, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth';
@@ -9,7 +10,7 @@ import { SubsonicApi } from '../core/subsonic';
 
 @Component({
   selector: 'app-playlist',
-  imports: [RouterLink, QueueActions, StarButton],
+  imports: [Share, RouterLink, QueueActions, StarButton],
   template: `
     @if (playlist.error()) {
       <p class="error" role="alert">{{ playlist.error()?.message }}</p>
@@ -27,6 +28,7 @@ import { SubsonicApi } from '../core/subsonic';
           Play all
         </button>
         <button type="button" (click)="player.enqueue(p.entry)" [disabled]="!p.entry.length">Add playlist to queue</button>
+        <app-share [ids]="['pl-' + p.id]" [description]="p.name" [disabled]="!p.entry.length" />
         @if (canEdit(p.owner)) {
           <button type="button" (click)="rename(p.id, p.name)">Rename</button>
           <label class="small">

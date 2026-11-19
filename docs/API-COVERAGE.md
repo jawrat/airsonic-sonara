@@ -11,7 +11,7 @@ Inventory retrieved November 15, 2026: 74 operations. Every listed operation has
 | `createBookmark` | Implemented against the local library/database. |
 | `createPlaylist` | Implemented against the local library/database. |
 | `createPodcastChannel` | Implemented against the local library/database. |
-| `createShare` | Songs and al- album IDs; podcasts, arbitrary filesystem directory shares and downloads are not implemented. |
+| `createShare` | Music songs, al- album IDs, pl- playlist IDs and encoded dir- catalog-directory IDs; accessible-track snapshots with up to 5000 entries. Podcast shares and public downloads are not implemented. |
 | `createUser` | Local authentication and implemented roles/folder access. LDAP, jukebox and video-conversion permissions are rejected when requested; upload permission is supported. |
 | `deleteBookmark` | Implemented against the local library/database. |
 | `deletePlaylist` | Implemented against the local library/database. |
@@ -112,3 +112,11 @@ Saved queues accept and return optional `currentIndex` for duplicate occurrences
 ## Library sidebar update
 
 `getAlbumList`/`getAlbumList2` accept optional positive `artistId`, filtering the existing folder-authorized query before ordering/pagination. The web library uses the complete authorized `getArtists` index for its grouped sidebar and labels the existing `newest` ordering Recently added. No database migration or default API behavior changes. See [APPLY-LIBRARY-LAYOUT-UPDATE.md](history/APPLY-LIBRARY-LAYOUT-UPDATE.md).
+
+## Queue and shared-link web controls
+
+The queue can be cleared with inline confirmation, and its music tracks can be saved as a private playlist with order and duplicates preserved. Playlist creation uses form POST, including large queues.
+
+New shares use `/s/{token}` with a 16-character random URL-safe token; existing `/share/{token}` URLs remain valid. The web client exposes share controls on folders, albums and playlists, plus a Shared links page to copy or revoke links. Expiration defaults to 30 days, with 7-day and no-expiration choices. Shares preserve an accessible-track snapshot; subsequent playlist/folder edits do not modify it. Owner permissions and folder access are rechecked when listening. See [QUEUE-SHARING-UPDATE.md](QUEUE-SHARING-UPDATE.md).
+
+Artwork supports `ar-` artist and encoded `dir-` directory cover IDs in addition to album and podcast cover IDs. Folder browsing exposes cover IDs for legacy clients.

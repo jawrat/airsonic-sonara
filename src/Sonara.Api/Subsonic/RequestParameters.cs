@@ -25,7 +25,12 @@ public static class RequestParameters
                 catch (Exception ex) when (ex is InvalidDataException or BadHttpRequestException)
                 { await SubsonicResult.Error(0, "The upload is too large or the multipart request is invalid.").ExecuteAsync(http); return; }
             }
-            else form = await http.Request.ReadFormAsync(http.RequestAborted);
+            else
+            {
+                try { form = await http.Request.ReadFormAsync(new FormOptions { ValueCountLimit = 5100 }, http.RequestAborted); }
+                catch (Exception ex) when (ex is InvalidDataException or BadHttpRequestException)
+                { await SubsonicResult.Error(0, "The form contains too many values or is invalid.").ExecuteAsync(http); return; }
+            }
             var values = form.ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase);
             foreach (var pair in http.Request.Query) values[pair.Key] = pair.Value; // query takes precedence
             http.Request.Query = new QueryCollection(values);

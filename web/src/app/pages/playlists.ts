@@ -1,3 +1,4 @@
+import { Share } from '../ui/share';
 import { Component, inject, resource, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { formatDuration } from '../core/format';
@@ -5,7 +6,7 @@ import { PlaylistImport, SubsonicApi } from '../core/subsonic';
 
 @Component({
   selector: 'app-playlists',
-  imports: [RouterLink],
+  imports: [Share, RouterLink],
   template: `
     <h1>Playlists</h1>
     @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
@@ -43,6 +44,7 @@ import { PlaylistImport, SubsonicApi } from '../core/subsonic';
             }
             <span class="muted small">{{ p.owner }}</span>
             <span class="muted time">{{ p.songCount }} tracks · {{ fmt(p.duration) }}</span>
+            <app-share [ids]="['pl-' + p.id]" [description]="p.name" [disabled]="!p.songCount" />
           </li>
         }
       </ul>

@@ -1,3 +1,4 @@
+import { Share } from '../ui/share';
 import { Component, inject, input, resource } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { formatDuration } from '../core/format';
@@ -10,7 +11,7 @@ import { Cover } from '../ui/cover';
 
 @Component({
   selector: 'app-album',
-  imports: [RouterLink, QueueActions, Cover, AddToPlaylist, StarButton],
+  imports: [Share, RouterLink, QueueActions, Cover, AddToPlaylist, StarButton],
   template: `
     @if (album.error()) {
       <p class="error" role="alert">{{ album.error()?.message }}</p>
@@ -30,6 +31,7 @@ import { Cover } from '../ui/cover';
           Play all
         </button>
         <button type="button" (click)="player.enqueue(a.song)" [disabled]="!a.song.length">Add album to queue</button>
+        <app-share [ids]="['al-' + a.id]" [description]="a.name" [disabled]="!a.song.length" />
         <app-star-button [target]="{ albumId: a.id }" [starred]="a.starred" />
         </div>
       </header>

@@ -175,3 +175,8 @@ export interface Genre { value: string; songCount: number; albumCount: number }
 export interface DirectoryEntry extends Partial<Song> { id: string; title: string; isDir: boolean; parent?: string }
 export interface MusicDirectory { id: string; name: string; parent?: string; child: DirectoryEntry[] }
 export interface AlbumFilters { artistId?: string; musicFolderId?: number; genre?: string; fromYear?: number; toYear?: number }
+
+export interface MediaShare {
+  id: string; url: string; description?: string; username?: string;
+  created: string; expires?: string; visitCount: number; entry?: Song[];
+}

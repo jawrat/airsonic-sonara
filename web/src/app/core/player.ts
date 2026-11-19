@@ -183,7 +183,7 @@ export class PlayerService {
   stop(): void {
     this.generation++; this.loadVersion++; clearTimeout(this.saveTimer); this.saveTimer = undefined;
     // Reset state before pause dispatches, so sign-out never persists an empty queue over the saved one.
-    this.queue.set([]); this.index.set(-1); this.playing.set(false);
+    this.queue.set([]); this.baseOrder = []; this.index.set(-1); this.playing.set(false);
     this.audio.pause(); this.audio.removeAttribute('src'); this.audio.load();
     this.position.set(0); this.duration.set(0); this.pendingSeek = null; this.error.set(''); this.syncError.set('');
   }

@@ -1,3 +1,4 @@
+import { Share } from '../ui/share';
 import { Component, computed, ElementRef, inject, resource, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -36,7 +37,7 @@ export function readLibraryState(p: ParamMap): State {
 }
 
 @Component({
-  selector: 'app-library', imports: [RouterLink, FormsModule, DatePipe, Cover, QueueActions],
+  selector: 'app-library', imports: [Share, RouterLink, FormsModule, DatePipe, Cover, QueueActions],
   template: `
     <div class="library-layout">
       <aside class="artist-pane" aria-label="Artist browser">
@@ -96,13 +97,13 @@ export function readLibraryState(p: ParamMap): State {
     @if (data.isLoading()) { <p role="status" class="muted">Loading…</p> }
     @if (data.value(); as r) {
       @if (state().view === 'folders') {
-        @if (state().dir) { <div class="toolbar"><button type="button" (click)="openFolder(r.parent ?? '')">Up</button><h2>{{ r.name }}</h2></div> }
+        @if (state().dir) { <div class="toolbar"><button type="button" (click)="openFolder(r.parent ?? '')">Up</button><h2>{{ r.name }}</h2><app-share [ids]="[state().dir.startsWith('dir-') ? state().dir : 'dir-' + state().dir + '-']" [description]="r.name ?? 'Music folder'" /></div> }
         @else { <h2>Music folders</h2> }
         <ul class="grid album-grid folder-grid">
           @if (!state().dir) {
-            @for (f of visibleFolders(); track f.id) { <li class="card"><button type="button" class="tile-button" (click)="openFolder('' + f.id)"><app-cover [id]="f.coverArt ?? ('dir-' + f.id + '-')" [label]="f.name" [size]="300" /><span class="title">{{ f.name }}</span></button><span class="muted small">Music folder</span></li> }
+            @for (f of visibleFolders(); track f.id) { <li class="card"><button type="button" class="tile-button" (click)="openFolder('' + f.id)"><app-cover [id]="f.coverArt ?? ('dir-' + f.id + '-')" [label]="f.name" [size]="300" /><span class="title">{{ f.name }}</span></button><span class="muted small">Music folder</span><app-share [ids]="['dir-' + f.id + '-']" [description]="f.name" /></li> }
           }
-          @for (d of r.directories; track d.id) { <li class="card"><button type="button" class="tile-button" (click)="openFolder(d.id)"><app-cover [id]="d.coverArt ?? d.id" [label]="d.title" [size]="300" /><span class="title">{{ d.title }}</span></button><span class="muted small">Folder</span></li> }
+          @for (d of r.directories; track d.id) { <li class="card"><button type="button" class="tile-button" (click)="openFolder(d.id)"><app-cover [id]="d.coverArt ?? d.id" [label]="d.title" [size]="300" /><span class="title">{{ d.title }}</span></button><span class="muted small">Folder</span><app-share [ids]="[d.id]" [description]="d.title" /></li> }
         </ul>
       }
       @if (r.genres.length) {
@@ -119,6 +120,7 @@ export function readLibraryState(p: ParamMap): State {
           @if (a.artistId) { <a [routerLink]="['/']" [queryParams]="artistParams(a.artistId)" class="muted album-artist" [title]="a.artist ?? ''">{{ a.artist }}</a> }
           <span class="muted small">{{ a.year ? a.year + ' · ' : '' }}{{ a.songCount }} tracks</span>
           @if (a.created) { <span class="muted small">Added {{ a.created | date:'shortDate' }}</span> }
+          <app-share [ids]="['al-' + a.id]" [description]="a.name" />
         </li> }</ul>
       }
       @if (r.songs.length) {

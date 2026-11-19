@@ -13,6 +13,7 @@ import {
   AlbumWithSongs,
   ArtistWithAlbums,
   ScanStatus,
+  MediaShare,
   SearchResult,
   Bookmark,
   Playlist,
@@ -141,7 +142,7 @@ export class SubsonicApi {
   }
 
   async createPlaylist(name: string, songIds: string[] = []): Promise<PlaylistWithSongs> {
-    const r = await this.call<{ playlist: PlaylistWithSongs }>('createPlaylist', {
+    const r = await this.callForm<{ playlist: PlaylistWithSongs }>('createPlaylist', {
       name,
       songId: songIds,
     });
@@ -163,6 +164,18 @@ export class SubsonicApi {
   async deletePlaylist(id: string): Promise<void> {
     await this.call('deletePlaylist', { id });
   }
+
+  async createShare(ids: string[], description: string, expires = 0): Promise<MediaShare> {
+    const result = await this.callForm<{ shares: { share?: MediaShare[] } }>('createShare', { id: ids, description, expires });
+    const share = result.shares.share?.[0];
+    if (!share) throw new Error('The server did not return a share link.');
+    return share;
+  }
+  async getShares(): Promise<MediaShare[]> {
+    const result = await this.call<{ shares: { share?: MediaShare[] } }>('getShares');
+    return result.shares.share ?? [];
+  }
+  async deleteShare(id: string): Promise<void> { await this.callForm('deleteShare', { id }); }
 
   async getStarred(): Promise<Starred> {
     const r = await this.call<{

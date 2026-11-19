@@ -1,3 +1,4 @@
+import { SharesPage } from './pages/shares';
 import { UploadsPage } from './pages/uploads';
 import { Routes } from '@angular/router';
 import { adminGuard, authGuard } from './core/auth.guard';
@@ -20,6 +21,7 @@ import { Login } from './pages/login';
 export const routes: Routes = [
   { path: 'login', component: Login },
   { path: '', component: Library, canActivate: [authGuard] },
+  { path: 'shares', component: SharesPage, canActivate: [authGuard] },
   { path: 'queue', component: QueuePage, canActivate: [authGuard] },
   { path: 'album/:id', component: AlbumPage, canActivate: [authGuard] },
   { path: 'artist/:id', component: ArtistPage, canActivate: [authGuard] },
