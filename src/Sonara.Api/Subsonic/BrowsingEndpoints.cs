@@ -12,6 +12,7 @@ public static partial class SubsonicEndpoints
     private static void MapBrowsing(RouteGroupBuilder rest)
     {
         Map(rest, "getMusicDirectory", GetMusicDirectory);
+        Map(rest, "getFolderList", GetFolderList);
         Map(rest, "getGenres", GetGenres);
         Map(rest, "getAlbumList", (string? type, int? size, int? offset, HttpContext h, SonaraDbContext db) => AlbumList(type, size, offset, h, db, true));
         Map(rest, "search2", (string? query, int? artistCount, int? albumCount, int? songCount, HttpContext h, SonaraDbContext db) => SearchTags(query, artistCount, albumCount, songCount, h, db, true));
@@ -273,20 +274,34 @@ public static partial class SubsonicEndpoints
         var folder = await db.MusicFolders.FirstOrDefaultAsync(f => f.Id == dir.Folder);
         if (folder is null) return NotFound();
         var tracks = await db.Tracks.AsNoTracking().Where(t => t.MusicFolderId == folder.Id)
-            .Select(t => new { t.Id, t.Path, t.Title }).ToListAsync();
+            .Select(t => new { t.Id, t.Path, t.Title, t.CreatedUtc }).ToListAsync();
         var prefix = dir.Relative.Length == 0 ? "" : dir.Relative.TrimEnd('/') + "/";
-        var children = new List<JsonNode>(); var seen = new HashSet<string>(StringComparer.Ordinal);
+        var children = new List<JsonNode>(); var directoryChildren = new Dictionary<string, JsonObject>(StringComparer.Ordinal);
         foreach (var t in tracks)
         {
             var relative = Path.GetRelativePath(folder.Path, t.Path).Replace('\\', '/');
             if (relative.StartsWith("../") || !relative.StartsWith(prefix, StringComparison.Ordinal)) continue;
             var rest = relative[prefix.Length..]; var slash = rest.IndexOf('/');
             if (slash < 0) children.Add(Obj(("id", t.Id.ToString()), ("parent", DirectoryId(folder.Id, dir.Relative)), ("title", t.Title), ("isDir", false)));
-            else if (seen.Add(rest[..slash])) children.Add(Obj(("id", DirectoryId(folder.Id, prefix + rest[..slash])), ("parent", DirectoryId(folder.Id, dir.Relative)), ("title", rest[..slash]), ("coverArt", DirectoryId(folder.Id, prefix + rest[..slash])), ("isDir", true)));
+            else
+            {
+                var name = rest[..slash];
+                if (!directoryChildren.TryGetValue(name, out var child))
+                {
+                    child = Obj(("id", DirectoryId(folder.Id, prefix + name)), ("parent", DirectoryId(folder.Id, dir.Relative)),
+                        ("title", name), ("coverArt", DirectoryId(folder.Id, prefix + name)), ("isDir", true), ("created", JsonValue.Create(t.CreatedUtc)));
+                    directoryChildren.Add(name, child); children.Add(child);
+                }
+                if (t.CreatedUtc < child["created"]!.GetValue<DateTime>()) child["created"] = JsonValue.Create(t.CreatedUtc);
+            }
         }
         if (dir.Relative.Length > 0 && children.Count == 0) return NotFound();
-        var ordered = children.OrderBy(j => j["isDir"]?.GetValue<bool>() == true ? 0 : 1)
-            .ThenBy(j => j["title"]?.GetValue<string>()).ThenBy(j => j["id"]?.GetValue<string>()).ToList();
+        var directoryRows = children.Where(j => j["isDir"]?.GetValue<bool>() == true);
+        var sortedDirectories = h.Request.Query["type"] == "newest"
+            ? directoryRows.OrderByDescending(j => j["created"]!.GetValue<DateTime>()).ThenBy(j => j["title"]!.GetValue<string>(), StringComparer.OrdinalIgnoreCase)
+            : directoryRows.OrderBy(j => j["title"]!.GetValue<string>(), StringComparer.OrdinalIgnoreCase);
+        var ordered = sortedDirectories.ThenBy(j => j["id"]!.GetValue<string>(), StringComparer.Ordinal)
+            .Concat(children.Where(j => j["isDir"]?.GetValue<bool>() != true).OrderBy(j => j["title"]?.GetValue<string>()).ThenBy(j => j["id"]?.GetValue<string>())).ToList();
         var total = ordered.Count;
         var page = h.Request.Query.ContainsKey("size") || h.Request.Query.ContainsKey("offset")
             ? ordered.Skip(Offset(h)).Take(Math.Clamp(Number(h, "size") ?? 100, 1, 500)).ToList() : ordered;
@@ -302,7 +317,7 @@ public static partial class SubsonicEndpoints
         }
         var parent = dir.Relative.Contains('/') ? dir.Relative[..dir.Relative.LastIndexOf('/')] : "";
         return SubsonicResult.Ok(Obj(("directory", Obj(("id", DirectoryId(folder.Id, dir.Relative)),
-            ("parent", dir.Relative.Length == 0 ? null : DirectoryId(folder.Id, parent)), ("totalChildren", total),
+            ("parent", dir.Relative.Length == 0 ? null : DirectoryId(folder.Id, parent)), ("indexId", dir.Relative.Length == 0 ? null : DirectoryId(folder.Id, dir.Relative.Split('/')[0])), ("totalChildren", total),
             ("name", dir.Relative.Length == 0 ? folder.Name : dir.Relative.Split('/').Last()), ("child", Arr(rendered))))));
     }
 }

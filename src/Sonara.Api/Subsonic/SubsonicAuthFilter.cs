@@ -87,7 +87,7 @@ public sealed class SubsonicAuthFilter(SonaraDbContext db, CredentialProtector p
 
     private static readonly HashSet<string> GeneralOperations = new(StringComparer.Ordinal)
     {
-        "ping", "getLicense", "getOpenSubsonicExtensions", "getMusicFolders", "getMusicDirectory", "getIndexes", "getArtists", "getArtist", "getAlbum", "getSong",
+        "ping", "getLicense", "getOpenSubsonicExtensions", "getMusicFolders", "getMusicDirectory", "getFolderList", "getIndexes", "getArtists", "getArtist", "getAlbum", "getSong",
         "getAlbumList", "getAlbumList2", "search", "search2", "search3", "getPlaylist", "getPlaylists", "getStarred", "getStarred2",
         "getBookmarks", "createBookmark", "deleteBookmark", "getPlayQueue", "savePlayQueue", "star", "unstar", "scrobble",
         "getGenres", "getSongsByGenre", "getRandomSongs", "getSimilarSongs", "getSimilarSongs2", "getTopSongs", "getVideos", "getVideoInfo", "getCaptions", "jukeboxControl",

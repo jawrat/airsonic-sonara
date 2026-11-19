@@ -172,8 +172,8 @@ export function episodeToSong(e: PodcastEpisode, channel: PodcastChannel): Song 
 
 export interface MusicFolder { id: number; name: string; coverArt?: string }
 export interface Genre { value: string; songCount: number; albumCount: number }
-export interface DirectoryEntry extends Partial<Song> { id: string; title: string; isDir: boolean; parent?: string }
-export interface MusicDirectory { id: string; name: string; parent?: string; child: DirectoryEntry[] }
+export interface DirectoryEntry extends Partial<Song> { id: string; title: string; isDir: boolean; parent?: string; created?: string; parentName?: string; path?: string; musicFolder?: string; songCount?: number }
+export interface MusicDirectory { id: string; name: string; parent?: string; indexId?: string; totalChildren?: number; child: DirectoryEntry[] }
 export interface AlbumFilters { artistId?: string; musicFolderId?: number; genre?: string; fromYear?: number; toYear?: number }
 
 export interface MediaShare {

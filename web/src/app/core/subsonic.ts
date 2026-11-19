@@ -9,6 +9,7 @@ import {
   MusicFolder,
   Genre,
   MusicDirectory,
+  DirectoryEntry,
   AlbumListType,
   AlbumWithSongs,
   ArtistWithAlbums,
@@ -115,8 +116,16 @@ export class SubsonicApi {
   async getGenreSongs(genre: string, count = 49, offset = 0, musicFolderId?: number): Promise<Song[]> {
     return (await this.call<{ songsByGenre: { song?: Song[] } }>('getSongsByGenre', { genre, count, offset, ...(musicFolderId ? { musicFolderId } : {}) })).songsByGenre.song ?? [];
   }
-  async getDirectory(id: string, size = 49, offset = 0): Promise<MusicDirectory> {
-    const r = await this.call<{ directory: MusicDirectory }>('getMusicDirectory', { id, size, offset });
+  async getFolderIndex(musicFolderId?: number): Promise<DirectoryEntry[]> {
+    const r = await this.call<{ indexes: { index?: { artist?: { id: string; name: string; coverArt?: string }[] }[] } }>('getIndexes', musicFolderId ? { musicFolderId } : {});
+    return (r.indexes.index ?? []).flatMap(g => g.artist ?? []).map(d => ({ id: d.id, title: d.name, coverArt: d.coverArt ?? d.id, isDir: true }));
+  }
+  async getFolderList(size = 49, offset = 0, musicFolderId?: number, type: 'newest' | 'alphabeticalByName' = 'newest'): Promise<MusicDirectory> {
+    const r = await this.call<{ directory: MusicDirectory }>('getFolderList', { size, offset, type, ...(musicFolderId ? { musicFolderId } : {}) });
+    return { ...r.directory, child: r.directory.child ?? [] };
+  }
+  async getDirectory(id: string, size = 49, offset = 0, type?: 'newest' | 'alphabeticalByName'): Promise<MusicDirectory> {
+    const r = await this.call<{ directory: MusicDirectory }>('getMusicDirectory', { id, size, offset, ...(type ? { type } : {}) });
     return { ...r.directory, child: r.directory.child ?? [] };
   }
   async reportPlayback(id: string, submission: boolean): Promise<void> {
