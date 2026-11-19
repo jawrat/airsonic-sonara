@@ -1,3 +1,4 @@
+using Sonara.Api.Security;
 using Sonara.Api.Podcasts;
 using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
@@ -59,8 +60,8 @@ public static partial class SubsonicEndpoints
     /// <summary>Clients call both /rest/ping and /rest/ping.view, via GET or POST.</summary>
     private static void Map(RouteGroupBuilder group, string name, Delegate handler)
     {
-        group.MapMethods($"/{name}", ["GET", "POST"], handler);
-        group.MapMethods($"/{name}.view", ["GET", "POST"], handler);
+        group.MapMethods($"/{name}", ["GET", "POST"], handler).WithMetadata(new SubsonicOperation(name));
+        group.MapMethods($"/{name}.view", ["GET", "POST"], handler).WithMetadata(new SubsonicOperation(name));
     }
 
     // ---- browsing -----------------------------------------------------------------------

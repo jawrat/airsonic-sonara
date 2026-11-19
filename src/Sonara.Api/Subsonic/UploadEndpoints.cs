@@ -1,3 +1,4 @@
+using Sonara.Api.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Sonara.Api.Options;
@@ -13,8 +14,8 @@ public static partial class SubsonicEndpoints
     private static void MapUploads(RouteGroupBuilder rest)
     {
         Map(rest, "getUploadFolders", GetUploadFolders);
-        rest.MapPost("/uploadMusic", UploadMusic);
-        rest.MapPost("/uploadMusic.view", UploadMusic);
+        rest.MapPost("/uploadMusic", UploadMusic).WithMetadata(new SubsonicOperation("uploadMusic"));
+        rest.MapPost("/uploadMusic.view", UploadMusic).WithMetadata(new SubsonicOperation("uploadMusic"));
     }
     private static async Task<IResult> GetUploadFolders(SonaraDbContext db, IOptions<SonaraOptions> options)
     {

@@ -1,3 +1,4 @@
+using Sonara.Api.Security;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Primitives;
 using Microsoft.AspNetCore.Http.Features;
@@ -13,10 +14,14 @@ public static class RequestParameters
     {
         if (http.Request.Path.StartsWithSegments("/rest") && http.Request.HasFormContentType)
         {
-            var operation = http.Request.Path.Value?.Split('/').Last().Replace(".view", "");
+            var operation = http.GetEndpoint()?.Metadata.GetMetadata<SubsonicOperation>()?.Name;
             IFormCollection form;
             if (operation is "uploadMusic" or "setAvatar")
             {
+                // Multipart credentials must be in query parameters. The web client already does this.
+                // Authenticate and check the role BEFORE reading or buffering any uploaded file.
+                var denied = await http.RequestServices.GetRequiredService<SubsonicAuthFilter>().AuthorizeAsync(http, includeForm: false);
+                if (denied is not null) { await denied.ExecuteAsync(http); return; }
                 var megabytes = operation == "setAvatar" ? 2 : Math.Clamp(http.RequestServices.GetRequiredService<IOptions<SonaraOptions>>().Value.Uploads.MaxFileMegabytes, 1, 1024);
                 var limit = (long)megabytes * 1024 * 1024;
                 var bodyLimit = http.Features.Get<IHttpMaxRequestBodySizeFeature>();

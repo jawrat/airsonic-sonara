@@ -277,14 +277,14 @@ export class SubsonicApi {
   }
 
   async createUser(username: string, password: string, adminRole: boolean): Promise<void> {
-    await this.call('createUser', { username, password: toEnc(password), adminRole });
+    await this.callForm('createUser', { username, password: toEnc(password), adminRole });
   }
 
   async updateUser(username: string, changes: { adminRole?: boolean; password?: string }): Promise<void> {
     const extra: Params = { username };
     if (changes.adminRole !== undefined) extra['adminRole'] = changes.adminRole;
     if (changes.password) extra['password'] = toEnc(changes.password);
-    await this.call('updateUser', extra);
+    await this.callForm('updateUser', extra);
   }
 
   async deleteUser(username: string): Promise<void> {
@@ -292,7 +292,7 @@ export class SubsonicApi {
   }
 
   async changePassword(username: string, password: string): Promise<void> {
-    await this.call('changePassword', { username, password: toEnc(password) });
+    await this.callForm('changePassword', { username, password: toEnc(password) });
   }
 
   /** URL usable directly as an <audio> src. Auth travels as a token, not the password. */

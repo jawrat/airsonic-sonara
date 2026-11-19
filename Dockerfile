@@ -49,7 +49,6 @@ ENV Sonara__Backups__PgDumpPath=/usr/lib/postgresql/17/bin/pg_dump \
     Sonara__DataDir=/var/sonara \
     Sonara__MusicFolder=/var/music \
     Sonara__Podcasts__Folder=/var/podcast \
-    ASPNETCORE_FORWARDEDHEADERS_ENABLED=true \
     PUID=1000 \
     PGID=1000
 

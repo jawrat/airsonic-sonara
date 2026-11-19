@@ -72,7 +72,7 @@ public static class TranscodePlanner
     /// </summary>
     public static IReadOnlyList<string> BuildArguments(string inputPath, TranscodePlan plan, int startSeconds)
     {
-        var args = new List<string> { "-nostdin", "-v", "error" };
+        var args = new List<string> { "-nostdin", "-v", "error", "-protocol_whitelist", "file,pipe" };
 
         if (startSeconds > 0)
         {

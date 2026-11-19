@@ -42,7 +42,7 @@ public sealed class AvatarImages(IOptions<SonaraOptions> options) : IDisposable
         try
         {
             var info = new ProcessStartInfo(options.Value.Transcoding.FfmpegPath) { UseShellExecute=false, RedirectStandardInput=true, RedirectStandardOutput=true, RedirectStandardError=true, CreateNoWindow=true };
-            foreach(var arg in new[] {"-nostdin", "-v", "error", "-max_alloc", "67108864", "-f", "image2pipe", "-i", "pipe:0", "-vf", "scale=128:128:force_original_aspect_ratio=decrease,pad=128:128:(ow-iw)/2:(oh-ih)/2:color=black", "-frames:v", "1", "-c:v", "png", "-f", "image2pipe", "pipe:1"}) info.ArgumentList.Add(arg);
+            foreach(var arg in new[] {"-nostdin", "-v", "error", "-protocol_whitelist", "pipe", "-max_alloc", "67108864", "-f", "image2pipe", "-i", "pipe:0", "-vf", "scale=128:128:force_original_aspect_ratio=decrease,pad=128:128:(ow-iw)/2:(oh-ih)/2:color=black", "-frames:v", "1", "-c:v", "png", "-f", "image2pipe", "pipe:1"}) info.ArgumentList.Add(arg);
             using var process = new Process { StartInfo=info }; process.Start();
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct); timeout.CancelAfter(TimeSpan.FromSeconds(15));
             using var kill = timeout.Token.Register(() => {try {if(!process.HasExited) process.Kill(true);} catch(InvalidOperationException) {} });

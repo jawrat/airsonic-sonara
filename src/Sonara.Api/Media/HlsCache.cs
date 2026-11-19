@@ -10,7 +10,7 @@ namespace Sonara.Api.Media;
 /// <summary>On-demand audio HLS. Publish only a completed cache; cancellation kills ffmpeg and removes partial files.</summary>
 public sealed class HlsCache(IOptions<SonaraOptions> options)
 {
-    private readonly SemaphoreSlim _gate = new(2);
+    private readonly SemaphoreSlim _gate = new(Math.Clamp(options.Value.Transcoding.MaxConcurrent > 0 ? options.Value.Transcoding.MaxConcurrent : 2, 1, 64));
     public async Task<string?> PrepareAsync(Track track, int rate, CancellationToken ct)
     {
         var root = Path.Combine(Path.GetFullPath(options.Value.DataDir), "cache", "hls");
@@ -31,7 +31,7 @@ public sealed class HlsCache(IOptions<SonaraOptions> options)
             temporary = dir + "." + Guid.NewGuid().ToString("N") + ".tmp";
             Directory.CreateDirectory(temporary);
             var info = new ProcessStartInfo(options.Value.Transcoding.FfmpegPath) { UseShellExecute = false, RedirectStandardError = true, RedirectStandardOutput = true, CreateNoWindow = true };
-            foreach (var arg in new[] { "-nostdin", "-v", "error", "-i", track.Path, "-map", "0:a:0", "-vn", "-c:a", "aac", "-b:a", $"{rate}k", "-f", "hls", "-hls_time", "6", "-hls_list_size", "0", "-hls_playlist_type", "vod", "-hls_segment_filename", Path.Combine(temporary, "segment-%05d.ts"), Path.Combine(temporary, "index.m3u8") }) info.ArgumentList.Add(arg);
+            foreach (var arg in new[] { "-nostdin", "-v", "error", "-protocol_whitelist", "file,pipe", "-i", track.Path, "-map", "0:a:0", "-vn", "-c:a", "aac", "-b:a", $"{rate}k", "-f", "hls", "-hls_time", "6", "-hls_list_size", "0", "-hls_playlist_type", "vod", "-hls_segment_filename", Path.Combine(temporary, "segment-%05d.ts"), Path.Combine(temporary, "index.m3u8") }) info.ArgumentList.Add(arg);
             using var process = Process.Start(info);
             if (process is null) return null;
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);

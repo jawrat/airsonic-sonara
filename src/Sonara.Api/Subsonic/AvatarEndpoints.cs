@@ -1,3 +1,4 @@
+using Sonara.Api.Security;
 using Microsoft.EntityFrameworkCore;
 using Sonara.Api.Media;
 using Sonara.Data;
@@ -10,7 +11,7 @@ public static partial class SubsonicEndpoints
     private static void MapAvatars(RouteGroupBuilder rest)
     {
         Map(rest, "getAvatars", () => SubsonicResult.Ok(Obj(("avatars", Obj(("avatar", Arr(AvatarImages.Builtins().Select(id => Obj(("id", id), ("name", id.Replace('-', ' ')))))))))));
-        rest.MapPost("/setAvatar", SetAvatar); rest.MapPost("/setAvatar.view", SetAvatar);
+        rest.MapPost("/setAvatar", SetAvatar).WithMetadata(new SubsonicOperation("setAvatar")); rest.MapPost("/setAvatar.view", SetAvatar).WithMetadata(new SubsonicOperation("setAvatar"));
     }
     private static async Task<IResult> SetAvatar(string? username, string? avatarId, HttpContext h, SonaraDbContext db, AvatarImages images)
     {

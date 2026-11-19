@@ -19,7 +19,7 @@ public static class CoverArtPlanner
     /// <summary>Scales down to <paramref name="size"/> pixels wide (never up), keeps the aspect ratio, outputs JPEG.</summary>
     public static IReadOnlyList<string> BuildArguments(int size) =>
     [
-        "-hide_banner", "-loglevel", "error",
+        "-hide_banner", "-loglevel", "error", "-max_alloc", "67108864", "-protocol_whitelist", "pipe",
         "-i", "pipe:0",
         "-vf", $"scale=w=min({size}\\,iw):h=-2",
         "-frames:v", "1",

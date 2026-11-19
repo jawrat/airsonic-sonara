@@ -33,7 +33,12 @@ public sealed class FfmpegTranscoder : IDisposable
 
         try
         {
-            await _slots.WaitAsync(ct);
+            if (!await _slots.WaitAsync(TimeSpan.FromSeconds(5), ct))
+            {
+                http.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                http.Response.Headers.RetryAfter = "5";
+                return true;
+            }
         }
         catch (OperationCanceledException)
         {

@@ -6,6 +6,7 @@ namespace Sonara.Api.Options;
 /// </summary>
 public sealed class SonaraOptions
 {
+    public SecurityOptions Security { get; set; } = new();
     public string PublicBaseUrl { get; set; } = "";
 
     public string DataDir { get; set; } = "data";
@@ -130,4 +131,10 @@ public sealed class BackupOptions
 public sealed class UploadOptions
 {
     public int MaxFileMegabytes { get; set; } = 100;
+}
+
+public sealed class SecurityOptions
+{
+    /// <summary>Exact addresses of reverse proxies allowed to supply client IP and HTTPS headers.</summary>
+    public string[] TrustedProxyIPs { get; set; } = [];
 }

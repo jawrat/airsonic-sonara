@@ -1,3 +1,5 @@
+using System.Net;
+using Microsoft.AspNetCore.HttpOverrides;
 using Sonara.Api;
 using Sonara.Api.Backups;
 using Sonara.Api.Media;
@@ -16,6 +18,7 @@ using Microsoft.Extensions.Options;
 var commandMode = BackupCommand.IsCommand(args);
 var builder = WebApplication.CreateBuilder((commandMode ? Array.Empty<string>() : args).Append("--hostBuilder:reloadConfigOnChange=false").ToArray());
 
+builder.WebHost.ConfigureKestrel(server => server.Limits.MaxRequestBodySize = 16 * 1024 * 1024);
 var section = builder.Configuration.GetSection("Sonara");
 builder.Services.Configure<SonaraOptions>(section);
 var options = section.Get<SonaraOptions>() ?? new SonaraOptions();
@@ -42,6 +45,19 @@ builder.Services.AddSonaraData(connectionString);
 builder.Services.AddSingleton(new CredentialProtector(
     CredentialProtector.LoadOrCreateKey(Path.Combine(dataDir, "secret.key"))));
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<SubsonicAuthFilter>();
+builder.Services.AddSingleton<AuthenticationThrottle>();
+builder.Services.Configure<ForwardedHeadersOptions>(forwarded =>
+{
+    forwarded.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    forwarded.ForwardLimit = 1;
+    forwarded.RequireHeaderSymmetry = true;
+    foreach (var address in options.Security.TrustedProxyIPs)
+    {
+        if (!IPAddress.TryParse(address, out var ip)) throw new InvalidOperationException("Security.TrustedProxyIPs must contain numeric IP addresses.");
+        forwarded.KnownProxies.Add(ip);
+    }
+});
 builder.Services.AddSingleton<IMediaScanner, MediaScanner>();
 builder.Services.AddSingleton<FfmpegTranscoder>();
 builder.Services.AddSingleton<CoverArtResizer>();
@@ -73,9 +89,16 @@ using (var scope = app.Services.CreateScope())
 }
 
 // The Angular build is copied to wwwroot in the Docker image.
-app.Use(RequestParameters.Normalize);
+app.UseForwardedHeaders();
+var indexFile = app.Environment.WebRootFileProvider.GetFileInfo("index.html");
+var indexHtml = indexFile.Exists ? await File.ReadAllTextAsync(indexFile.PhysicalPath!) : "";
+var contentPolicy = SecurityHeaders.Policy(indexHtml);
+var publicHttps = Uri.TryCreate(app.Services.GetRequiredService<IOptions<SonaraOptions>>().Value.PublicBaseUrl, UriKind.Absolute, out var publicOrigin) && publicOrigin.Scheme == "https";
+app.Use((http, next) => { SecurityHeaders.Apply(http, contentPolicy, publicHttps); return next(http); });
 app.UseDefaultFiles();
 app.UseStaticFiles();
+app.UseRouting();
+app.Use(RequestParameters.Normalize);
 
 app.MapGet("/healthz", () => Results.Ok("ok"));
 app.MapSubsonic();

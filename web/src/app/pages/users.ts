@@ -84,7 +84,7 @@ export class UsersPage {
   protected readonly playback = signal<string | null>(null);
   protected readonly editing = signal<UserInfo | null>(null);
   protected readonly roles = [
-    { key: 'settingsRole', label: 'Change own password' }, { key: 'streamRole', label: 'Stream music' },
+    { key: 'settingsRole', label: 'Change own account settings' }, { key: 'streamRole', label: 'Stream music' },
     { key: 'downloadRole', label: 'Download originals' }, { key: 'uploadRole', label: 'Upload music to enabled destinations' }, { key: 'playlistRole', label: 'Manage playlists' },
     { key: 'coverArtRole', label: 'View cover art' }, { key: 'podcastRole', label: 'Manage podcasts' },
     { key: 'shareRole', label: 'Create public shares' }, { key: 'commentRole', label: 'Rate music and post chat' },

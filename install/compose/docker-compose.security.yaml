@@ -1,0 +1,21 @@
+# Pi hardening override. Apply AFTER docker-compose.yaml and docker-compose.pi.yaml.
+# Set SONARA_TRUSTED_PROXY_IP in the existing private .env (see docs/SECURITY-HARDENING-UPDATE.md).
+services:
+  sonara:
+    ports: !override
+      - "127.0.0.1:${SONARA_PORT:-4042}:4040"
+    environment:
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "false"
+      Sonara__Security__TrustedProxyIPs__0: ${SONARA_TRUSTED_PROXY_IP:?Set SONARA_TRUSTED_PROXY_IP in install/compose/.env}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=256m,mode=1777
+    pids_limit: 256
