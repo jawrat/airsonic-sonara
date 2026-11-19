@@ -71,7 +71,7 @@ public static partial class SubsonicEndpoints
             .Where(f => f.Enabled).OrderBy(f => f.Id).ToListAsync();
 
         return SubsonicResult.Ok(Obj(("musicFolders", Obj(
-            ("musicFolder", Arr(folders.Select(f => Obj(("id", f.Id), ("name", f.Name)))))))));
+            ("musicFolder", Arr(folders.Select(f => Obj(("id", f.Id), ("name", f.Name), ("coverArt", DirectoryId(f.Id, ""))))))))));
     }
 
     private static async Task<IResult> GetIndexes(HttpContext http, SonaraDbContext db)
@@ -92,7 +92,7 @@ public static partial class SubsonicEndpoints
             else
             {
                 var name = relative[..slash]; var id = DirectoryId(folder.Id, name);
-                roots.TryAdd(id, Obj(("id", id), ("name", name)));
+                roots.TryAdd(id, Obj(("id", id), ("name", name), ("coverArt", id)));
             }
         }
         var indexes = roots.Values.GroupBy(r => IndexLetter(r["name"]!.GetValue<string>())).OrderBy(g => g.Key)
@@ -260,6 +260,26 @@ public static partial class SubsonicEndpoints
                 ? new CoverImage(await File.ReadAllBytesAsync(imagePath), ContentTypeOfImage(imagePath))
                 : null;
         }
+        else if (id.StartsWith("ar-", StringComparison.Ordinal) || id.StartsWith("dir-", StringComparison.Ordinal))
+        {
+            var tracks = ScopedTracks(http, db);
+            if (id.StartsWith("ar-", StringComparison.Ordinal))
+            {
+                if (!int.TryParse(id[3..], out var artistId)) return Results.NotFound();
+                tracks = tracks.Where(t => t.Album.ArtistId == artistId);
+            }
+            else
+            {
+                tracks = tracks.Where(t => DirectoryTracks(id, db).Any(d => d.Id == t.Id));
+            }
+            // One representative track per album, rather than rereading every audio file.
+            // Folder covers are checked first across all candidates; embedded-tag reads are bounded.
+            var paths = await tracks.GroupBy(t => t.AlbumId)
+                .Select(g => g.OrderBy(t => t.DiscNumber).ThenBy(t => t.TrackNumber).ThenBy(t => t.Id).First().Path)
+                .ToListAsync(http.RequestAborted);
+            paths.Sort(StringComparer.Ordinal);
+            image = await Task.Run(() => CoverArtFinder.FindRepresentative(paths), http.RequestAborted);
+        }
         else
         {
             var raw = id.StartsWith("al-", StringComparison.Ordinal) ? id[3..] : id;
@@ -281,7 +301,7 @@ public static partial class SubsonicEndpoints
 
         if (CoverArtPlanner.ClampSize(size) is { } px)
         {
-            var resized = await resizer.GetAsync(image.Data, px, http.RequestAborted);
+            var resized = await resizer.GetAsync(image.Data, px, http.RequestAborted, id);
             if (resized is not null) return Results.File(resized, "image/jpeg");
             // Resizing failed (ffmpeg missing?): the original is still better than nothing.
         }
@@ -354,7 +374,7 @@ public static partial class SubsonicEndpoints
     }
 
     private static JsonObject ArtistJson(Artist a) =>
-        Obj(("id", a.Id.ToString()), ("name", a.Name), ("albumCount", a.AlbumCount));
+        Obj(("id", a.Id.ToString()), ("name", a.Name), ("albumCount", a.AlbumCount), ("coverArt", $"ar-{a.Id}"));
 
     private static JsonObject AlbumJson(Album a) => Obj(
         ("id", a.Id.ToString()),

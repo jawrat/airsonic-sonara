@@ -18,7 +18,7 @@ import { Cover } from '../ui/cover';
     }
     @if (podcast.value(); as p) {
       <header class="head">
-        <app-cover class="art" [id]="p.coverArt" [size]="400" />
+        <app-cover class="art" [id]="p.coverArt" [label]="p.title" [size]="400" />
         <div>
           <h1>{{ p.title }}</h1>
           @if (p.description) {

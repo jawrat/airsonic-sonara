@@ -30,7 +30,7 @@ import { Cover } from '../ui/cover';
       <ul class="grid">
         @for (p of list; track p.id) {
           <li class="card">
-            <app-cover [id]="p.coverArt" [size]="300" />
+            <app-cover [id]="p.coverArt" [label]="p.title" [size]="300" />
             <a [routerLink]="['/podcast', p.id]" class="title">{{ p.title }}</a>
             @if (p.status === 'new') { <span class="muted small">Subscription queued · checking feed…</span> }
             @if (p.status === 'error') {

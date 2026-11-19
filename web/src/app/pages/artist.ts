@@ -15,7 +15,7 @@ import { Cover } from '../ui/cover';
       <ul class="grid">
         @for (al of a.album; track al.id) {
           <li class="card">
-            <app-cover [id]="al.coverArt" [size]="300" />
+            <app-cover [id]="al.coverArt" [label]="al.name" [size]="300" />
             <a [routerLink]="['/album', al.id]" class="title">{{ al.name }}</a>
             <span class="muted small">
               {{ al.year ?? '' }}{{ al.year ? ' · ' : '' }}{{ al.songCount }} tracks

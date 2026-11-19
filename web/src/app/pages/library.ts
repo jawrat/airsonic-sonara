@@ -98,11 +98,11 @@ export function readLibraryState(p: ParamMap): State {
       @if (state().view === 'folders') {
         @if (state().dir) { <div class="toolbar"><button type="button" (click)="openFolder(r.parent ?? '')">Up</button><h2>{{ r.name }}</h2></div> }
         @else { <h2>Music folders</h2> }
-        <ul class="folder-list">
+        <ul class="grid album-grid folder-grid">
           @if (!state().dir) {
-            @for (f of visibleFolders(); track f.id) { <li><button type="button" class="link" (click)="openFolder('' + f.id)">📁 {{ f.name }}</button></li> }
+            @for (f of visibleFolders(); track f.id) { <li class="card"><button type="button" class="tile-button" (click)="openFolder('' + f.id)"><app-cover [id]="f.coverArt ?? ('dir-' + f.id + '-')" [label]="f.name" [size]="300" /><span class="title">{{ f.name }}</span></button><span class="muted small">Music folder</span></li> }
           }
-          @for (d of r.directories; track d.id) { <li><button type="button" class="link" (click)="openFolder(d.id)">📁 {{ d.title }}</button></li> }
+          @for (d of r.directories; track d.id) { <li class="card"><button type="button" class="tile-button" (click)="openFolder(d.id)"><app-cover [id]="d.coverArt ?? d.id" [label]="d.title" [size]="300" /><span class="title">{{ d.title }}</span></button><span class="muted small">Folder</span></li> }
         </ul>
       }
       @if (r.genres.length) {
@@ -110,12 +110,12 @@ export function readLibraryState(p: ParamMap): State {
       }
       @if (r.artists.length) {
         @if (state().view === 'search') { <h2>Artists</h2> }
-        <ul class="artist-list">@for (a of r.artists; track a.id) { <li><a [routerLink]="['/']" [queryParams]="artistParams(a.id)">{{ a.name }}</a><span class="muted small"> · {{ a.albumCount }} albums</span></li> }</ul>
+        <ul class="grid album-grid artist-grid">@for (a of r.artists; track a.id) { <li class="card"><a [routerLink]="['/']" [queryParams]="artistParams(a.id)" class="cover-link" [attr.aria-label]="'Open artist ' + a.name"><app-cover [id]="a.coverArt ?? ('ar-' + a.id)" [label]="a.name" [folderId]="state().folderId" [size]="300" /></a><a [routerLink]="['/']" [queryParams]="artistParams(a.id)" class="title">{{ a.name }}</a><span class="muted small">{{ a.albumCount }} {{ a.albumCount === 1 ? 'album' : 'albums' }}</span></li> }</ul>
       }
       @if (r.albums.length) {
         @if (state().view === 'search') { <h2>Albums</h2> }
         <p class="muted small album-range">Albums {{ state().offset + 1 }}–{{ state().offset + r.albums.length }}@if (state().view === 'albums' || state().view === 'artistAlbums') { · {{ modeLabel() }} }</p>
-        <ul class="grid album-grid">@for (a of r.albums; track a.id) { <li class="card"><a [routerLink]="['/album', a.id]" class="cover-link" [attr.aria-label]="'Open album ' + a.name"><app-cover [id]="a.coverArt" [size]="300" /></a><a [routerLink]="['/album', a.id]" class="title">{{ a.name }}</a>
+        <ul class="grid album-grid">@for (a of r.albums; track a.id) { <li class="card"><a [routerLink]="['/album', a.id]" class="cover-link" [attr.aria-label]="'Open album ' + a.name"><app-cover [id]="a.coverArt" [label]="a.name" [size]="300" /></a><a [routerLink]="['/album', a.id]" class="title">{{ a.name }}</a>
           @if (a.artistId) { <a [routerLink]="['/']" [queryParams]="artistParams(a.artistId)" class="muted album-artist" [title]="a.artist ?? ''">{{ a.artist }}</a> }
           <span class="muted small">{{ a.year ? a.year + ' · ' : '' }}{{ a.songCount }} tracks</span>
           @if (a.created) { <span class="muted small">Added {{ a.created | date:'shortDate' }}</span> }
@@ -164,6 +164,8 @@ export function readLibraryState(p: ParamMap): State {
     .library-content { min-width:0; }.mobile-toggle { display:none; }
     .album-grid { grid-template-columns:repeat(auto-fill,minmax(min(100%,10rem),1fr));gap:1rem; }
     .album-grid .card { padding:0;gap:.3rem;padding-bottom:.6rem;min-width:0; }
+    .tile-button { display:block;width:100%;padding:0;border:0;background:none;color:var(--accent);text-align:left;border-radius:.35rem; }
+    .tile-button .title { margin-top:.3rem; }.tile-button:focus-visible { outline:2px solid var(--accent);outline-offset:3px; }
     .cover-link { display:block; }.cover-link app-cover { border-radius:.35rem; }
     .album-grid .title { white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3;font-family:inherit;font-size:1rem;text-transform:none;letter-spacing:normal; }
     .album-artist { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }.album-range { margin:.25rem 0 1rem; }

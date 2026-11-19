@@ -57,7 +57,7 @@ public static partial class SubsonicEndpoints
         json["isDir"] = true;
         return json;
     }
-    private static JsonObject LegacyArtist(Artist a) => Obj(("id", $"ar-{a.Id}"), ("name", a.Name), ("title", a.Name), ("isDir", true));
+    private static JsonObject LegacyArtist(Artist a) => Obj(("id", $"ar-{a.Id}"), ("name", a.Name), ("title", a.Name), ("coverArt", $"ar-{a.Id}"), ("isDir", true));
     private static int? TaggedId(string? value, string prefix) =>
         int.TryParse(value?.StartsWith(prefix, StringComparison.Ordinal) == true ? value[prefix.Length..] : value, out var id) && id > 0 ? id : null;
 
@@ -282,7 +282,7 @@ public static partial class SubsonicEndpoints
             if (relative.StartsWith("../") || !relative.StartsWith(prefix, StringComparison.Ordinal)) continue;
             var rest = relative[prefix.Length..]; var slash = rest.IndexOf('/');
             if (slash < 0) children.Add(Obj(("id", t.Id.ToString()), ("parent", DirectoryId(folder.Id, dir.Relative)), ("title", t.Title), ("isDir", false)));
-            else if (seen.Add(rest[..slash])) children.Add(Obj(("id", DirectoryId(folder.Id, prefix + rest[..slash])), ("parent", DirectoryId(folder.Id, dir.Relative)), ("title", rest[..slash]), ("isDir", true)));
+            else if (seen.Add(rest[..slash])) children.Add(Obj(("id", DirectoryId(folder.Id, prefix + rest[..slash])), ("parent", DirectoryId(folder.Id, dir.Relative)), ("title", rest[..slash]), ("coverArt", DirectoryId(folder.Id, prefix + rest[..slash])), ("isDir", true)));
         }
         if (dir.Relative.Length > 0 && children.Count == 0) return NotFound();
         var ordered = children.OrderBy(j => j["isDir"]?.GetValue<bool>() == true ? 0 : 1)

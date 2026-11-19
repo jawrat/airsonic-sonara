@@ -17,6 +17,7 @@ public static class CoverArtFinder
         [".jpeg"] = "image/jpeg",
         [".png"] = "image/png",
         [".webp"] = "image/webp",
+        [".gif"] = "image/gif",
     };
 
     public static CoverImage? Find(IEnumerable<string> trackPaths)
@@ -38,6 +39,21 @@ public static class CoverArtFinder
         return null;
     }
 
+    /// <summary>Prefer artwork from descendant albums; bound expensive embedded tag reads.</summary>
+    public static CoverImage? FindRepresentative(IEnumerable<string> trackPaths)
+    {
+        var paths = trackPaths.ToList();
+        foreach (var directory in paths.Select(Path.GetDirectoryName).OfType<string>().Distinct())
+        {
+            if (FromFolder(directory) is { } image) return image;
+        }
+        foreach (var path in paths.Take(20))
+        {
+            if (FromTag(path) is { } image) return image;
+        }
+        return null;
+    }
+
     public static CoverImage? FromFolder(string directory)
     {
         try
@@ -50,15 +66,36 @@ public static class CoverArtFinder
                 .OrderBy(x => x.Rank)
                 .ToList();
 
-            if (candidates.Count == 0) return null;
-
-            var best = candidates[0];
-            return new CoverImage(File.ReadAllBytes(best.File), ImageTypes[best.Ext]);
+            foreach (var candidate in candidates)
+            {
+                try
+                {
+                    var bytes = File.ReadAllBytes(candidate.File);
+                    // File extensions and embedded MIME labels are often wrong. Reject obvious
+                    // HTML/text/empty placeholders and use the actual image type on the wire.
+                    if (ImageType(bytes) is { } type) return new CoverImage(bytes, type);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+            }
+            return null;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             return null;
         }
+    }
+
+    // A signature check is deliberately cheap; it does not prove that the entire image
+    // decodes. ffmpeg remains responsible for decoding/resizing, and the UI handles failures.
+    private static string? ImageType(ReadOnlySpan<byte> data)
+    {
+        if (data.Length >= 24 && data.StartsWith(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 })) return "image/png";
+        if (data.Length >= 4 && data[0] == 0xff && data[1] == 0xd8 && data[2] == 0xff) return "image/jpeg";
+        if (data.Length >= 12 && data[..4].SequenceEqual("RIFF"u8) && data.Slice(8, 4).SequenceEqual("WEBP"u8)) return "image/webp";
+        if (data.Length >= 10 && (data[..6].SequenceEqual("GIF87a"u8) || data[..6].SequenceEqual("GIF89a"u8))) return "image/gif";
+        if (data.Length >= 14 && data[..2].SequenceEqual("BM"u8)) return "image/bmp";
+        if (data.Length >= 8 && (data[..4].SequenceEqual(new byte[] { 73, 73, 42, 0 }) || data[..4].SequenceEqual(new byte[] { 77, 77, 0, 42 }))) return "image/tiff";
+        return null;
     }
 
     public static CoverImage? FromTag(string path)
@@ -69,15 +106,12 @@ public static class CoverArtFinder
             var pictures = file.Tag.Pictures;
             if (pictures.Length == 0) return null;
 
-            var picture = pictures.FirstOrDefault(p => p.Type == TagLib.PictureType.FrontCover) ?? pictures[0];
-            var data = picture.Data.Data;
-            if (data.Length == 0) return null;
-
-            var type = picture.MimeType;
-            if (string.IsNullOrWhiteSpace(type) || !type.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
-                type = "image/jpeg";
-
-            return new CoverImage(data, type);
+            foreach (var picture in pictures.OrderBy(p => p.Type == TagLib.PictureType.FrontCover ? 0 : 1))
+            {
+                var data = picture.Data.Data;
+                if (ImageType(data) is { } type) return new CoverImage(data, type);
+            }
+            return null;
         }
         catch (Exception)
         {

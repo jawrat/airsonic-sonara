@@ -65,3 +65,40 @@ describe('Artist sidebar and album home', () => {
     expect(readLibraryState(convertToParamMap({view:'artistAlbums',artist:'../bad'})).view).toBe('albums');
   });
 });
+
+describe('Artist and folder artwork tiles', () => {
+  function setup(initial: Record<string,string>) {
+    const params = new BehaviorSubject(convertToParamMap(initial));
+    const api = {
+      coverArtUrl: (id?: string) => id ? '/art/' + id : null,
+      getFolders: vi.fn(async () => [{ id: 7, name: 'Music', coverArt: 'dir-7-' }]),
+      getGenres: vi.fn(async () => []), getArtistIndex: vi.fn(async () => []),
+      getArtists: vi.fn(async () => [{ id: '22', name: 'Grateful Dead', albumCount: 1, coverArt: 'ar-22' }]),
+      getDirectory: vi.fn(async () => ({ name: 'Music', child: [{ id: 'dir-7-RGVhZA', title: 'Dead', isDir: true, coverArt: 'dir-7-RGVhZA' }] })),
+    };
+    TestBed.configureTestingModule({imports:[Library],providers:[provideRouter([]),
+      {provide:ActivatedRoute,useValue:{queryParamMap:params,snapshot:{queryParamMap:params.value}}},
+      {provide:SubsonicApi,useValue:api},{provide:PlayerService,useValue:{}}]});
+    const fixture = TestBed.createComponent(Library); fixture.detectChanges(); return { fixture, params, api };
+  }
+  it('renders linked artist tiles with singular album counts and representative covers', async () => {
+    const { fixture } = setup({ view: 'artists', folder: '7' });
+    await vi.waitFor(() => { fixture.detectChanges(); expect(fixture.nativeElement.querySelector('.artist-grid img')).not.toBeNull(); });
+    expect(fixture.nativeElement.querySelector('.artist-grid img').src).toContain('ar-22');
+    expect(fixture.nativeElement.querySelector('.artist-grid').textContent).toContain('1 album');
+    expect(fixture.nativeElement.querySelector('.artist-grid a').href).toContain('artist=22');
+    expect(fixture.nativeElement.querySelector('.artist-grid a').href).toContain('folder=7');
+  });
+  it('renders root and nested folder tiles and keeps folder navigation', async () => {
+    const { fixture, params, api } = setup({ view: 'folders' });
+    await vi.waitFor(() => { fixture.detectChanges(); expect(fixture.nativeElement.querySelector('.folder-grid img')).not.toBeNull(); });
+    expect(fixture.nativeElement.querySelector('.folder-grid img').src).toContain('dir-7-');
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    fixture.nativeElement.querySelector('.folder-grid button').click();
+    expect(navigate).toHaveBeenCalledWith(['/'], {queryParams:{view:'folders',dir:'7',offset:0},queryParamsHandling:'merge'});
+    params.next(convertToParamMap({view:'folders',dir:'7'})); fixture.detectChanges();
+    await vi.waitFor(() => { fixture.detectChanges(); expect(fixture.nativeElement.querySelector('.folder-grid').textContent).toContain('Dead'); });
+    expect(api.getDirectory).toHaveBeenCalledWith('7',49,0);
+    expect(fixture.nativeElement.querySelector('.folder-grid img').src).toContain('dir-7-RGVhZA');
+  });
+});

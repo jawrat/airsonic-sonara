@@ -11,7 +11,7 @@ import { Cover } from './cover';
     @if (player.current(); as song) {
       <footer class="bar" aria-label="Audio player">
         <div class="now">
-          <app-cover [id]="song.coverArt" [size]="96" class="art" />
+          <app-cover [id]="song.coverArt" [label]="song.album || song.title" [size]="96" class="art" />
           <div class="meta">
             <a [routerLink]="song.channelId ? ['/podcast', song.channelId] : ['/album', song.albumId]" class="title">{{ song.title }}</a>
             <span class="muted small">{{ song.artist }}</span>

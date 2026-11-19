@@ -1,4 +1,5 @@
 export interface Artist {
+  coverArt?: string;
   id: string;
   name: string;
   albumCount: number;
@@ -169,7 +170,7 @@ export function episodeToSong(e: PodcastEpisode, channel: PodcastChannel): Song 
   };
 }
 
-export interface MusicFolder { id: number; name: string }
+export interface MusicFolder { id: number; name: string; coverArt?: string }
 export interface Genre { value: string; songCount: number; albumCount: number }
 export interface DirectoryEntry extends Partial<Song> { id: string; title: string; isDir: boolean; parent?: string }
 export interface MusicDirectory { id: string; name: string; parent?: string; child: DirectoryEntry[] }

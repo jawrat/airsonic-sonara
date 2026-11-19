@@ -17,7 +17,7 @@ import { Cover } from '../ui/cover';
     }
     @if (album.value(); as a) {
       <header class="head">
-        <app-cover class="art" [id]="a.coverArt" [size]="400" />
+        <app-cover class="art" [id]="a.coverArt" [label]="a.name" [size]="400" />
         <div class="info">
           <h1>{{ a.name }}</h1>
         <p class="muted">

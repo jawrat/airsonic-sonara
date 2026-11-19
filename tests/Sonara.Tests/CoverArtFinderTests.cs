@@ -16,29 +16,52 @@ public sealed class CoverArtFinderTests : IDisposable
     }
 
     [Fact]
+    public void Skips_fake_cover_files_and_uses_the_next_image_with_its_actual_content_type()
+    {
+        Write("cover.jpg", "<html>download failed</html>"u8.ToArray());
+        Write("folder.jpg", CoverImageFixture.Png); // misleading extension
+        var image = CoverArtFinder.FromFolder(_dir);
+        Assert.NotNull(image);
+        Assert.Equal("image/png", image.ContentType);
+        Assert.Equal<byte>(CoverImageFixture.Png, image.Data);
+    }
+
+    [Fact]
+    public void Representative_art_skips_empty_albums_and_finds_a_descendant_cover()
+    {
+        var empty = Directory.CreateDirectory(Path.Combine(_dir, "empty")).FullName;
+        var covered = Directory.CreateDirectory(Path.Combine(_dir, "covered")).FullName;
+        File.WriteAllBytes(Path.Combine(covered, "cover.png"), CoverImageFixture.Png);
+        var image = CoverArtFinder.FindRepresentative([Path.Combine(empty, "a.flac"), Path.Combine(covered, "b.flac")]);
+        Assert.NotNull(image);
+        Assert.Equal<byte>(CoverImageFixture.Png, image.Data);
+        Assert.Null(CoverArtFinder.FindRepresentative([]));
+    }
+
+    [Fact]
     public void Finds_a_conventional_folder_image_case_insensitively()
     {
-        Write("Folder.JPG", [1, 2, 3]);
+        Write("Folder.JPG", CoverImageFixture.Jpeg);
         var track = Write("01 song.mp3", [0]);
 
         var image = CoverArtFinder.Find([track]);
 
         Assert.NotNull(image);
         Assert.Equal("image/jpeg", image!.ContentType);
-        Assert.Equal<byte>([1, 2, 3], image.Data);
+        Assert.Equal<byte>(CoverImageFixture.Jpeg, image.Data);
     }
 
     [Fact]
     public void Prefers_cover_over_folder()
     {
-        Write("folder.jpg", [1]);
-        Write("cover.png", [2]);
+        Write("folder.jpg", CoverImageFixture.Jpeg);
+        Write("cover.png", CoverImageFixture.Png);
         var track = Write("a.mp3", [0]);
 
         var image = CoverArtFinder.Find([track]);
 
         Assert.Equal("image/png", image!.ContentType);
-        Assert.Equal<byte>([2], image.Data);
+        Assert.Equal<byte>(CoverImageFixture.Png, image.Data);
     }
 
     [Fact]

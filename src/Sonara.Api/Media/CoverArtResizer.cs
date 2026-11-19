@@ -25,7 +25,7 @@ public sealed class CoverArtResizer : IDisposable
     public void Dispose() => _slots.Dispose();
 
     /// <returns>JPEG bytes, or null if resizing failed (the caller then sends the original).</returns>
-    public async Task<byte[]?> GetAsync(byte[] source, int size, CancellationToken ct)
+    public async Task<byte[]?> GetAsync(byte[] source, int size, CancellationToken ct, string? coverId = null)
     {
         var cachePath = Path.Combine(_cacheDir, CoverArtPlanner.CacheFileName(source, size));
         try
@@ -40,7 +40,7 @@ public sealed class CoverArtResizer : IDisposable
         await _slots.WaitAsync(ct);
         try
         {
-            var resized = await RunAsync(source, size, ct);
+            var resized = await RunAsync(source, size, ct, coverId);
             if (resized is null) return null;
 
             try
@@ -62,7 +62,7 @@ public sealed class CoverArtResizer : IDisposable
         }
     }
 
-    private async Task<byte[]?> RunAsync(byte[] source, int size, CancellationToken ct)
+    private async Task<byte[]?> RunAsync(byte[] source, int size, CancellationToken ct, string? coverId)
     {
         var startInfo = new ProcessStartInfo(_ffmpeg)
         {
@@ -109,14 +109,14 @@ public sealed class CoverArtResizer : IDisposable
 
             if (process.ExitCode != 0 || output.Length == 0)
             {
-                _logger.LogWarning("ffmpeg could not resize cover art: {Error}", await stderr);
+                _logger.LogWarning("ffmpeg could not resize cover art {CoverId}: {Error}", coverId, await stderr);
                 return null;
             }
             return output.ToArray();
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
-            _logger.LogWarning("Resizing cover art timed out");
+            _logger.LogWarning("Resizing cover art {CoverId} timed out", coverId);
             return null;
         }
         finally

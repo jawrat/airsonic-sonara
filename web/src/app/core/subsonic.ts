@@ -289,10 +289,11 @@ export class SubsonicApi {
   }
 
   /** Image URL for an <img> tag, or null if there is no cover id. Auth travels as a token. */
-  coverArtUrl(id: string | undefined | null, size?: number): string | null {
+  coverArtUrl(id: string | undefined | null, size?: number, musicFolderId?: number): string | null {
     if (!id) return null;
     const params = new URLSearchParams({ ...this.auth.currentParams(), id });
     if (size) params.set('size', String(size));
+    if (musicFolderId) params.set('musicFolderId', String(musicFolderId));
     return `/rest/getCoverArt?${params}`;
   }
 

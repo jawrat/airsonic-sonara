@@ -25,7 +25,7 @@ import { StarButton } from '../ui/star-button';
         <ul class="grid">
           @for (a of s.albums; track a.id) {
             <li class="card">
-              <app-cover [id]="a.coverArt" [size]="300" />
+              <app-cover [id]="a.coverArt" [label]="a.name" [size]="300" />
               <a [routerLink]="['/album', a.id]" class="title">{{ a.name }}</a>
               <span class="muted">{{ a.artist }}</span>
             </li>
