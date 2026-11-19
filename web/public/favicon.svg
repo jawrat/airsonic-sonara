@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Sonara</title>
+  <rect width="64" height="64" rx="14" fill="#101116"/>
+  <g fill="none" stroke-width="9" stroke-linecap="butt">
+    <path d="M46 16H28C12 16 12 32 28 32H31" stroke="#f2cda8"/>
+    <path d="M33 32H36C52 32 52 48 36 48H18" stroke="#80b7ff"/>
+  </g>
+</svg>
